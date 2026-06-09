@@ -31,61 +31,54 @@ SPDX-License-Identifier: MIT
 
 /** @file placa.h
  ** @brief Declaraciones de la capa de abstracción de la placa
- ** @details Define la estructura de datos que contiene todos los recursos
- * funcionales
- ** de hardware de la placa (LEDs y Teclas) y declara la función de
- * inicialización.
+ ** @details Define la estructura de datos que contiene todos los recursos funcionales
+ ** de hardware de la placa (Zumbador, Teclas y Pantalla) y declara la función de
+ ** inicialización.
  **/
 
-/* === Headers files inclusions
- * ================================================================ */
+/* === Headers files inclusions ============================================ */
 
 #include "digital.h"
+#include "screen.h" // ¡Agregamos esto para que reconozca el display_t!
 
-/* === Header for C++ compatibility
- * ============================================================ */
+/* === Header for C++ compatibility ======================================== */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* === Public data type declarations
- * =========================================================== */
+/* === Public data type declarations ======================================= */
 
 /**
- * @brief Estructura que agrupa todos los recursos de hardware de la placa
- * EDU-CIAA
- * @details Esta estructura contiene los punteros a los objetos de las salidas
- * (LEDs) y entradas (Teclas) abstractas. El tipo \c board_t se define como
- * un puntero constante a esta estructura para protegerla de modificaciones
- * accidentales.
+ * @brief Estructura que agrupa todos los recursos de hardware del poncho
+ * @details Esta estructura contiene los punteros a los objetos abstractos
+ * de la placa. El tipo \c board_t se define como un puntero constante a 
+ * esta estructura para protegerla de modificaciones accidentales.
  */
 typedef struct board_s {
     digital_output_t buzzer;
-    digital_input_t cancelar; 
-    digital_input_t acceptar;      
+    
+    digital_input_t tecla_cancel; // Nombres ajustados para coincidir con placa.c
+    digital_input_t tecla_accept;       
 
-    digital_input_t tecla_1; /**< Entrada digital asignada a la Tecla 1 */
-    digital_input_t tecla_2; /**< Entrada digital asignada a la Tecla 2 */
-    digital_input_t tecla_3; /**< Entrada digital asignada a la Tecla 3 */
-    digital_input_t tecla_4; /**< Entrada digital asignada a la Tecla 4 */
+    digital_input_t tecla_f1;
+    digital_input_t tecla_f2;
+    digital_input_t tecla_f3;
+    digital_input_t tecla_f4;
+    
+    display_t display;            // ¡Agregamos el descriptor de la pantalla!
 
 } const *board_t;
 
-/* === Public function declarations
- * ============================================================ */
+/* === Public function declarations ======================================== */
 
 /**
  * @brief Inicializa toda la placa y sus periféricos
- * @details Configura los puertos GPIO, la multiplexación de pines y crea
- * internamente las instancias para todas las entradas y salidas de la placa.
- * @return board_t Puntero a la estructura con los recursos funcionales de la
- * placa listos para usar
+ * @return board_t Puntero a la estructura con los recursos funcionales
  */
 board_t BoardCreate(void);
 
-/* === End of conditional blocks
- * =============================================================== */
+/* === End of conditional blocks =========================================== */
 
 #ifdef __cplusplus
 }
