@@ -137,8 +137,8 @@ board_t BoardCreate(void) {
     board.tecla_f2 = DigitalInputCreate(KEY_F2_GPIO, KEY_F2_BIT, true);
     board.tecla_f3 = DigitalInputCreate(KEY_F3_GPIO, KEY_F3_BIT, true);
     board.tecla_f4 = DigitalInputCreate(KEY_F4_GPIO, KEY_F4_BIT, true);
-    board.tecla_aceptar = DigitalInputCreate(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, true);
-    board.tecla_cancelar = DigitalInputCreate(KEY_CANCEL_GPIO, KEY_CANCEL_BIT, true);
+    board.tecla_accept = DigitalInputCreate(KEY_ACCEPT_GPIO, KEY_ACCEPT_BIT, true);
+    board.tecla_cancel = DigitalInputCreate(KEY_CANCEL_GPIO, KEY_CANCEL_BIT, true);
 
     // 4. Configurar e instanciar la pantalla multiplexada
     static const struct display_driver_s display_driver = {

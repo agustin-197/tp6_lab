@@ -32,7 +32,6 @@ int main(void) {
         DisplayRefresh(mi_placa->display);
 
         // Frenar el microcontrolador un instante para que el ojo humano pueda ver el dígito encendido
-        // Si parpadea muy rápido, aumenta este número. Si va demasiado lento, achícalo.
         RetardoBloqueante(3000000);
     }
 
