@@ -105,4 +105,34 @@ display_t DisplayCreate(uint8_t digits, display_driver_t driver) {
     return display;
 }
 
-void DisplayWriteBCD(display_t display, uint8_t * number, uint8_
+void DisplayWriteBCD(display_t display, uint8_t * number, uint8_t size) {
+    for (uint8_t i = 0; i < size; i++) {
+        if (i < display->digits) {
+            // Invertimos el orden al guardar para compensar el ruteo físico de la placa
+            display->memory[display->digits - 1 - i] = IMAGENES[number[i]];
+        }
+    }
+}
+
+void DisplayRefresh(display_t display) {
+    display->driver.UpdateSegments(0);
+
+    display->driver.UpdateDigits(display->active_digit);
+
+    display->driver.UpdateSegments(display->memory[display->active_digit]);
+
+    display->active_digit++;
+    if (display->active_digit >= display->digits) {
+        display->active_digit = 0;
+    }
+}
+
+void DisplayFlashDigits(display_t display, uint8_t from, uint8_t to, uint16_t frecuency) {
+    // Función pendiente de implementación
+}
+
+void DisplayToggleDots(display_t display, uint8_t from, uint8_t to) {
+    // Función pendiente de implementación
+}
+
+/* === End of documentation ==================================================================== */
