@@ -4,7 +4,7 @@ Facultad de Ciencias Exactas y Tecnología
 Universidad Nacional de Tucuman
 http://www.microprocesadores.unt.edu.ar/
 
-Copyright 2016-2025, Esteban Volentini <evolentini@herrera.unt.edu.ar>
+Copyright 2026, Gerardo Agustín Díaz <agustin041097@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -36,18 +36,20 @@ SPDX-License-Identifier: MIT
  ** inicialización.
  **/
 
-/* === Headers files inclusions ============================================ */
+/* === Headers files inclusions ==================================================================================== */
 
 #include "digital.h"
-#include "screen.h" // ¡Agregamos esto para que reconozca el display_t!
+#include "screen.h"
 
-/* === Header for C++ compatibility ======================================== */
+/* === Header for C++ compatibility ================================================================================ */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* === Public data type declarations ======================================= */
+/* === Public macros definitions =================================================================================== */
+
+/* === Public data type declarations =============================================================================== */
 
 /**
  * @brief Estructura que agrupa todos los recursos de hardware del poncho
@@ -56,29 +58,32 @@ extern "C" {
  * esta estructura para protegerla de modificaciones accidentales.
  */
 typedef struct board_s {
-    digital_output_t buzzer;
+    digital_output_t buzzer;      /**< Salida digital asignada al zumbador (o LED azul) */
     
-    digital_input_t tecla_cancel; // Nombres ajustados para coincidir con placa.c
-    digital_input_t tecla_accept;       
-
-    digital_input_t tecla_f1;
-    digital_input_t tecla_f2;
-    digital_input_t tecla_f3;
-    digital_input_t tecla_f4;
+    digital_input_t tecla_cancel; /**< Entrada digital asignada a la Tecla Cancelar */
+    digital_input_t tecla_accept; /**< Entrada digital asignada a la Tecla Aceptar */
     
-    display_t display;            // ¡Agregamos el descriptor de la pantalla!
+    digital_input_t tecla_f1;     /**< Entrada digital asignada a la Tecla F1 */
+    digital_input_t tecla_f2;     /**< Entrada digital asignada a la Tecla F2 */
+    digital_input_t tecla_f3;     /**< Entrada digital asignada a la Tecla F3 */
+    digital_input_t tecla_f4;     /**< Entrada digital asignada a la Tecla F4 */
+    
+    display_t display;            /**< Descriptor de la pantalla de 7 segmentos */
+} const * board_t;
 
-} const *board_t;
+/* === Public variable declarations ================================================================================ */
 
-/* === Public function declarations ======================================== */
+/* === Public function declarations ================================================================================ */
 
 /**
  * @brief Inicializa toda la placa y sus periféricos
- * @return board_t Puntero a la estructura con los recursos funcionales
+ * @details Configura los puertos GPIO, la multiplexación de pines y crea
+ * internamente las instancias para todas las entradas y salidas de la placa.
+ * @return board_t Puntero a la estructura con los recursos funcionales listos para usar
  */
 board_t BoardCreate(void);
 
-/* === End of conditional blocks =========================================== */
+/* === End of conditional blocks =================================================================================== */
 
 #ifdef __cplusplus
 }

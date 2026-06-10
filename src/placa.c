@@ -24,36 +24,89 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 SPDX-License-Identifier: MIT
-*************************************************************************************************/
+*********************************************************************************************************************/
+
 /** @file placa.c
- ** @brief Implementación del Board Support Package
+ ** @brief Implementación del Board Support Package (BSP)
  ** @details Este archivo oculta los detalles de configuración de bajo nivel
  ** del microcontrolador y la asignación de pines, creando y exponiendo
  ** únicamente objetos abstractos de entradas y salidas para la aplicación.
  **/
 
-/* === Headers files inclusions ============================================ */
+/* === Headers files inclusions ================================================================ */
+
 #include "placa.h"
-#include "poncho.h"  // ¡Contiene todas las macros de pines!
+#include "poncho.h"
 #include "screen.h"
 #include "chip.h"
 #include <stdlib.h>
 
-/* === Macros definitions ================================================== */
-// Nota: ¡Borramos todas las macros manuales viejas porque ya están en poncho.h!
+/* === Macros definitions ====================================================================== */
 
-/* === Private variable definitions ======================================== */
+#define LED_R_PORT 2
+#define LED_R_PIN  0
+#define LED_R_FUNC SCU_MODE_FUNC4
+#define LED_R_GPIO 5
+#define LED_R_BIT  0
+
+#define LED_G_PORT 2
+#define LED_G_PIN  1
+#define LED_G_FUNC SCU_MODE_FUNC4
+#define LED_G_GPIO 5
+#define LED_G_BIT  1
+
+#define LED_1_PORT 2
+#define LED_1_PIN  10
+#define LED_1_FUNC SCU_MODE_FUNC0
+#define LED_1_GPIO 0
+#define LED_1_BIT  14
+
+#define LED_2_PORT 2
+#define LED_2_PIN  11
+#define LED_2_FUNC SCU_MODE_FUNC0
+#define LED_2_GPIO 1
+#define LED_2_BIT  11
+
+#define LED_3_PORT 2
+#define LED_3_PIN  12
+#define LED_3_FUNC SCU_MODE_FUNC0
+#define LED_3_GPIO 1
+#define LED_3_BIT  12
+
+/* === Private data type declarations ========================================================== */
+
+/* === Private function declarations =========================================================== */
+
+/**
+ * @brief Configura la multiplexación física y la dirección de los pines
+ * @details Inicializa el ruteo de las teclas, el zumbador y la pantalla, y fuerza el apagado
+ * de los LEDs internos no utilizados en la placa EDU-CIAA para evitar interferencias visuales.
+ */
+static void BoardPinsConfigure(void);
+
+/**
+ * @brief Enciende un dígito específico de la pantalla y apaga los demás
+ * @param[in] digit Índice del dígito a encender (0 a 3)
+ */
+static void BoardDisplayUpdateDigits(uint8_t digit);
+
+/**
+ * @brief Enciende o apaga los segmentos físicos evaluando una máscara de bits
+ * @param[in] segments Máscara de bits con los segmentos a encender
+ */
+static void BoardDisplayUpdateSegments(uint8_t segments);
+
+/* === Private variable definitions ============================================================ */
 
 /**
  * @brief Instancia estática de la estructura de la placa
  */
 static struct board_s board;
 
-/* === Private function implementations ==================================== */
+/* === Public variable definition  ============================================================= */
 
-/**
- * @brief Configura la multiplexación física y la dirección de los pines
- */
+/* === Private function definitions ============================================================ */
+
 static void BoardPinsConfigure(void) {
     // 1. Ruteo de las teclas (Entradas con Pull-Up)
     Chip_SCU_PinMuxSet(KEY_F1_PORT, KEY_F1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_PULLUP | KEY_F1_FUNC);
@@ -65,6 +118,7 @@ static void BoardPinsConfigure(void) {
 
     // 2. Ruteo del Zumbador
     Chip_SCU_PinMuxSet(BUZZER_PORT, BUZZER_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | BUZZER_FUNC);
+
     // 3. Ruteo de los 4 Dígitos de la pantalla
     Chip_SCU_PinMuxSet(DIGIT_1_PORT, DIGIT_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_1_FUNC);
     Chip_SCU_PinMuxSet(DIGIT_2_PORT, DIGIT_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_2_FUNC);
@@ -87,21 +141,18 @@ static void BoardPinsConfigure(void) {
     Chip_GPIO_SetDir(LPC_GPIO_PORT, SEGMENT_P_GPIO, (1 << SEGMENT_P_BIT), 1);
 
     // APAGADO FORZOSO DE LEDS NO UTILIZADOS
-    // Ruteo
     Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
     Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
     Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
     Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
     Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
 
-    // Dirección como salidas
     Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_R_GPIO, (1 << LED_R_BIT), 1);
     Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_G_GPIO, (1 << LED_G_BIT), 1);
     Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_1_GPIO, (1 << LED_1_BIT), 1);
     Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_2_GPIO, (1 << LED_2_BIT), 1);
     Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_3_GPIO, (1 << LED_3_BIT), 1);
 
-    // Estado en Bajo (Apagados)
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, 0);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_G_GPIO, LED_G_BIT, 0);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_1_GPIO, LED_1_BIT, 0);
@@ -109,9 +160,6 @@ static void BoardPinsConfigure(void) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_3_GPIO, LED_3_BIT, 0);
 }
 
-/**
- * @brief Enciende un dígito específico de la pantalla y apaga los demás
- */
 static void BoardDisplayUpdateDigits(uint8_t digit) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, DIGIT_1_GPIO, DIGIT_1_BIT, 0);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, DIGIT_2_GPIO, DIGIT_2_BIT, 0);
@@ -126,9 +174,6 @@ static void BoardDisplayUpdateDigits(uint8_t digit) {
     }
 }
 
-/**
- * @brief Enciende o apaga los segmentos físicos evaluando una máscara de bits
- */
 static void BoardDisplayUpdateSegments(uint8_t segments) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_A_GPIO, SEGMENT_A_BIT, (segments & SEGMENT_A) ? 1 : 0);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_B_GPIO, SEGMENT_B_BIT, (segments & SEGMENT_B) ? 1 : 0);
@@ -140,11 +185,8 @@ static void BoardDisplayUpdateSegments(uint8_t segments) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, SEGMENT_P_GPIO, SEGMENT_P_BIT, (segments & SEGMENT_P) ? 1 : 0);
 }
 
-/* === Public function implementation ====================================== */
+/* === Public function implementation ========================================================== */
 
-/**
- * @brief Inicializa y configura todos los recursos de hardware de la placa
- */
 board_t BoardCreate(void) {
     // 1. Inicializar GPIO y multiplexación de pines
     Chip_GPIO_Init(LPC_GPIO_PORT);
@@ -172,4 +214,4 @@ board_t BoardCreate(void) {
     return &board;
 }
 
-/* === End of documentation ================================================ */
+/* === End of documentation ==================================================================== */
