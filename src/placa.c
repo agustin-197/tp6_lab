@@ -65,7 +65,6 @@ static void BoardPinsConfigure(void) {
 
     // 2. Ruteo del Zumbador
     Chip_SCU_PinMuxSet(BUZZER_PORT, BUZZER_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | BUZZER_FUNC);
-
     // 3. Ruteo de los 4 Dígitos de la pantalla
     Chip_SCU_PinMuxSet(DIGIT_1_PORT, DIGIT_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_1_FUNC);
     Chip_SCU_PinMuxSet(DIGIT_2_PORT, DIGIT_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_2_FUNC);
@@ -86,6 +85,28 @@ static void BoardPinsConfigure(void) {
     Chip_GPIO_SetDir(LPC_GPIO_PORT, DIGITS_GPIO, DIGITS_MASK, 1);
     Chip_GPIO_SetDir(LPC_GPIO_PORT, SEGMENTS_GPIO, SEGMENTS_MASK, 1);
     Chip_GPIO_SetDir(LPC_GPIO_PORT, SEGMENT_P_GPIO, (1 << SEGMENT_P_BIT), 1);
+
+    // APAGADO FORZOSO DE LEDS NO UTILIZADOS
+    // Ruteo
+    Chip_SCU_PinMuxSet(LED_R_PORT, LED_R_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_R_FUNC);
+    Chip_SCU_PinMuxSet(LED_G_PORT, LED_G_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_G_FUNC);
+    Chip_SCU_PinMuxSet(LED_1_PORT, LED_1_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_1_FUNC);
+    Chip_SCU_PinMuxSet(LED_2_PORT, LED_2_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_2_FUNC);
+    Chip_SCU_PinMuxSet(LED_3_PORT, LED_3_PIN, SCU_MODE_INBUFF_EN | SCU_MODE_INACT | LED_3_FUNC);
+
+    // Dirección como salidas
+    Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_R_GPIO, (1 << LED_R_BIT), 1);
+    Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_G_GPIO, (1 << LED_G_BIT), 1);
+    Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_1_GPIO, (1 << LED_1_BIT), 1);
+    Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_2_GPIO, (1 << LED_2_BIT), 1);
+    Chip_GPIO_SetDir(LPC_GPIO_PORT, LED_3_GPIO, (1 << LED_3_BIT), 1);
+
+    // Estado en Bajo (Apagados)
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_R_GPIO, LED_R_BIT, 0);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_G_GPIO, LED_G_BIT, 0);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_1_GPIO, LED_1_BIT, 0);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_2_GPIO, LED_2_BIT, 0);
+    Chip_GPIO_SetPinState(LPC_GPIO_PORT, LED_3_GPIO, LED_3_BIT, 0);
 }
 
 /**

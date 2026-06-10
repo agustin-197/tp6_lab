@@ -31,6 +31,9 @@ int main(void) {
         // Ejecutar UN SOLO PASO del barrido de la pantalla
         DisplayRefresh(mi_placa->display);
 
+        // Hacemos parpadear el "zumbador" (LED Azul)
+        DigitalOutputToggle(mi_placa->buzzer);
+
         // Frenar el microcontrolador un instante para que el ojo humano pueda ver el dígito encendido
         RetardoBloqueante(3000000);
     }
