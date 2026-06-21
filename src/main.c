@@ -44,7 +44,7 @@ SPDX-License-Identifier: MIT
  * @details Este valor permite ajustar la velocidad a la que se refresca la pantalla
  * durante la prueba visual.
  */
-#define CICLOS_RETARDO 3000000
+#define CICLOS_RETARDO 10000
 
 /* === Private data type declarations ========================================================== */
 
@@ -56,19 +56,15 @@ SPDX-License-Identifier: MIT
  * No es exacta y solo sirve para esta prueba inicial.
  * @param[in] iteraciones Cantidad de iteraciones del bucle for para generar la demora.
  */
-void RetardoBloqueante(uint32_t iteraciones);
+void RetardoBloqueante(uint32_t iteraciones) {
+    for (volatile uint32_t i = 0; i < iteraciones; i++);
+}
 
 /* === Private variable definitions ============================================================ */
 
 /* === Public variable definition  ============================================================= */
 
 /* === Private function definitions ============================================================ */
-
-void RetardoBloqueante(uint32_t iteraciones) {
-    for (volatile uint32_t i = 0; i < iteraciones; i++) {
-        // El modificador 'volatile' evita que el compilador optimice y borre este bucle
-    }
-}
 
 /* === Public function implementation ========================================================== */
 
@@ -79,27 +75,59 @@ void RetardoBloqueante(uint32_t iteraciones) {
  * @return int Retorna 0 al finalizar la ejecución (nunca debería ocurrir en un sistema embebido).
  */
 int main(void) {
-    // 1. Inicializar la placa y obtener el puntero a todos los recursos de hardware
     board_t mi_placa = BoardCreate();
 
-    // 2. Preparar un arreglo con los números que queremos mostrar (Ej: 1, 2, 3, 4)
-    uint8_t digitos_prueba[] = {1, 2, 3, 4};
+    // Arreglo con todos los dígitos del 0 al 9 para probar la tabla BCD
+    uint8_t digitos_completos[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    uint8_t offset = 0; // Controla qué número empieza a dibujarse
+    uint8_t buffer_display[4];
 
-    // 3. Escribir el arreglo en la memoria interna del controlador de la pantalla
-    DisplayWriteBCD(mi_placa->display, digitos_prueba, 4);
+    // --- CARGA INICIAL ANTES DE ENTRAR AL BUCLE ---
+    buffer_display[0] = digitos_completos[(offset + 0) % 10];
+    buffer_display[1] = digitos_completos[(offset + 1) % 10];
+    buffer_display[2] = digitos_completos[(offset + 2) % 10];
+    buffer_display[3] = digitos_completos[(offset + 3) % 10];
+    DisplayWriteBCD(mi_placa->display, buffer_display, 4);
 
-    // 4. Bucle infinito de la aplicación
     while (1) {
-        // Ejecutar UN SOLO PASO del barrido de la pantalla
+        // 1. Refrescar la pantalla (a esta velocidad, el ojo ve los 4 a la vez)
         DisplayRefresh(mi_placa->display);
 
-        // Hacemos parpadear el "zumbador" (LED Azul)
-        DigitalOutputToggle(mi_placa->buzzer);
+        // 2. PRUEBA DE TECLAS Y FUNCIONES:
+        
+        // Tecla ACEPTAR: Desplaza los números (0123 -> 1234 -> 2345)
+        if (DigitalInputHasActivated(mi_placa->tecla_accept)) {
+            offset++;
+            // Cargamos los nuevos números al buffer
+            buffer_display[0] = digitos_completos[(offset + 0) % 10];
+            buffer_display[1] = digitos_completos[(offset + 1) % 10];
+            buffer_display[2] = digitos_completos[(offset + 2) % 10];
+            buffer_display[3] = digitos_completos[(offset + 3) % 10];
+            
+            // ACTUALIZAMOS LA MEMORIA SOLO CUANDO CAMBIAN LOS NÚMEROS
+            DisplayWriteBCD(mi_placa->display, buffer_display, 4);
+            
+            DigitalOutputToggle(mi_placa->buzzer); // Sonido/LED de confirmación
+        }
 
-        // Frenar el microcontrolador un instante para que el ojo humano pueda ver el dígito encendido
+        // Tecla CANCELAR: Prueba de la función ToggleDots (enciende/apaga puntos)
+        if (DigitalInputHasActivated(mi_placa->tecla_cancel)) {
+            DisplayToggleDots(mi_placa->display, 0, 3);
+        }
+
+        // Tecla F1: Activa el parpadeo (FlashDigits) en todos los dígitos
+        // 100 significa que cambiará de estado cada 100 ciclos de barrido
+        if (DigitalInputHasActivated(mi_placa->tecla_f1)) {
+            DisplayFlashDigits(mi_placa->display, 0, 3, 100); 
+        }
+
+        // Tecla F2: Apaga el parpadeo (frecuencia 0)
+        if (DigitalInputHasActivated(mi_placa->tecla_f2)) {
+            DisplayFlashDigits(mi_placa->display, 0, 0, 0);
+        }
+
         RetardoBloqueante(CICLOS_RETARDO);
     }
-
     return 0;
 }
 

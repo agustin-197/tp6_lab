@@ -36,6 +36,7 @@ SPDX-License-Identifier: MIT
 
 #include "screen.h"
 #include <string.h>
+#include <stdbool.h>
 
 /* === Macros definitions ====================================================================== */
 
@@ -50,10 +51,16 @@ SPDX-License-Identifier: MIT
  * @brief Estructura interna (oculta) del descriptor de la pantalla
  */
 struct display_s {
-    uint8_t digits;                 /**< Cantidad de dígitos de la pantalla */
-    uint8_t active_digit;           /**< Dígito actualmente encendido en el barrido */
-    uint8_t memory[8];              /**< Memoria de video (máscaras de segmentos) */
-    struct display_driver_s driver; /**< Copia de los callbacks del hardware */
+    uint8_t digits;                 
+    uint8_t active_digit;           
+    uint8_t memory[8];              
+    struct display_driver_s driver; 
+    // Nuevas variables para el parpadeo:
+    uint8_t flash_from;
+    uint8_t flash_to;
+    uint16_t flash_count;
+    uint16_t flash_freq;
+    bool is_flashing;
 };
 
 /* === Private function declarations =========================================================== */
@@ -116,10 +123,31 @@ void DisplayWriteBCD(display_t display, uint8_t * number, uint8_t size) {
 
 void DisplayRefresh(display_t display) {
     display->driver.UpdateSegments(0);
-
     display->driver.UpdateDigits(display->active_digit);
 
-    display->driver.UpdateSegments(display->memory[display->active_digit]);
+    // Lógica para determinar si el dígito actual debe parpadear
+    bool hide_digit = false;
+    if (display->flash_freq > 0) {
+        // Incrementamos el tiempo solo 1 vez por ciclo completo (cuando volvemos al dígito 0)
+        if (display->active_digit == 0) {
+            display->flash_count++;
+            if (display->flash_count >= display->flash_freq) {
+                display->flash_count = 0;
+                display->is_flashing = !display->is_flashing;
+            }
+        }
+        
+        // Calculamos a qué dígito lógico (0 a 3) corresponde el hardware actual
+        uint8_t logical_digit = display->digits - 1 - display->active_digit;
+        if (logical_digit >= display->flash_from && logical_digit <= display->flash_to) {
+            if (display->is_flashing) hide_digit = true;
+        }
+    }
+
+    // Encendemos los segmentos solo si no está oculto por el parpadeo
+    if (!hide_digit) {
+        display->driver.UpdateSegments(display->memory[display->active_digit]);
+    }
 
     display->active_digit++;
     if (display->active_digit >= display->digits) {
@@ -128,11 +156,20 @@ void DisplayRefresh(display_t display) {
 }
 
 void DisplayFlashDigits(display_t display, uint8_t from, uint8_t to, uint16_t frecuency) {
-    // Función pendiente de implementación
+    display->flash_from = from;
+    display->flash_to = to;
+    display->flash_freq = frecuency;
+    display->flash_count = 0;
+    display->is_flashing = false; // Empezamos con los dígitos encendidos
 }
 
 void DisplayToggleDots(display_t display, uint8_t from, uint8_t to) {
-    // Función pendiente de implementación
+    for (uint8_t i = from; i <= to; i++) {
+        if (i < display->digits) {
+            // Alternamos el estado del 8vo bit (el punto decimal)
+            display->memory[display->digits - 1 - i] ^= (1 << 7);
+        }
+    }
 }
 
 /* === End of documentation ==================================================================== */
